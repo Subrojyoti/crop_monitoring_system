@@ -14,9 +14,13 @@ using namespace std;
 
 class Table {
 public:
-    vector<string> attrName;
-    vector<vector<string>> data;
-    vector<vector<string>> attrValueList;
+    vector<string> attrName;                    // stores attribute names.
+    vector<vector<string>> data;                // store the actual data rows.
+    vector<vector<string>> attrValueList;       // store unique attribute values for each attribute.
+
+    
+    /* `extractAttrValue()` : Extracts unique attribute values for each attribute from the `data` and 
+    stores them in `attrValueList`. */
 
     void extractAttrValue() {
         attrValueList.resize(attrName.size());
@@ -32,14 +36,16 @@ public:
     }
 };
 
+// characteristics of each node in a decision tree
 class Node {
 public:
-    int criteriaAttrIndex;
-    string attrValue;
-    int treeIndex;
-    bool isLeaf;
-    string label;
-    vector<int> children;
+    int criteriaAttrIndex;          // stores index of the attribute that the node splits on.
+    string attrValue;               // stores the value of the attribute that leads to this node.
+    int treeIndex;                  // stores the index of the node in decision tree
+    bool isLeaf;                    // Indicates if the node is a leaf node
+    string label;                   // Label (or class) assigned to the leaf node
+    vector<int> children;           // Vector of indices of child nodes
+
 
     Node() {
         isLeaf = false;
@@ -48,8 +54,11 @@ public:
 
 class DecisionTree {
 public:
-    Table initialTable;
-    vector<Node> tree;
+    Table initialTable;             // Stores the initial table of data.
+    vector<Node> tree;              // Vector of `Node` objects representing the decision tree.
+
+    /*Takes a Table object as input, initializes initialTable, extracts attribute values,
+     builds the decision tree starting from the root node (run() is called).*/
 
     DecisionTree(Table table) {
         initialTable = table;
@@ -62,6 +71,7 @@ public:
         printTree(0, "");
     }
 
+    // `guess()`: Predicts the label for a given input row using DFS traversal.
     string guess(vector<string> row) {
         string label = "";
         int leafNode = dfs(row, 0);
@@ -72,6 +82,8 @@ public:
         return label;
     }
 
+    /*dfs() function recursively traverses a decision tree to find the appropriate leaf node that 
+    corresponds to a given row of data for classification.*/
     int dfs(vector<string>& row, int here) {
         if (tree[here].isLeaf) {
             return here;
@@ -86,6 +98,16 @@ public:
         }
         return -1;
     }
+
+    /*
+    
+    run() function: recursively constructs a decision tree using the ID3 algorithm.
+    It selects attributes based on information gain, splits the data into subsets, 
+    creates nodes for each subset, and assigns labels to leaf nodes based on majority voting, 
+    ensuring the tree grows until all data subsets are classified or a stopping criterion 
+    (such as high purity in nodes) is met.
+    
+    */
 
     void run(Table table, int nodeIndex) {
         if (isLeafNode(table)) {
@@ -132,6 +154,13 @@ public:
         }
     }
 
+
+    /*
+    getMajorityLabel() function: computes the majority label and its count from the last column of a given `Table` object 
+    (`table`). It iterates through the data rows, counts occurrences of each label, and determines which label 
+    has the highest count, returning this label along with its count as a pair<string, int>.
+    
+    */
     pair<string, int> getMajorityLabel(Table table) {
         string majorLabel = "";
         int majorCount = 0;
@@ -146,6 +175,12 @@ public:
         return {majorLabel, majorCount};
     }
 
+    /*
+    isLeafNode() function: checks if all rows in the Table object (table) have the same label in the last column.
+    If all rows except the first have the same label, it returns true, indicating that the node is a leaf node in 
+    the context of constructing a decision tree. If there is any difference in labels, it returns false.
+    */
+
     bool isLeafNode(Table table) {
         for (int i = 1; i < table.data.size(); i++) {
             if (table.data[0].back() != table.data[i].back()) {
@@ -154,6 +189,13 @@ public:
         }
         return true;
     }
+
+    /*
+    `getSelectedAttribute()` function selects the attribute (column index) from a given `Table` object (`table`)
+    that maximizes the gain ratio when used as the splitting criterion in a decision tree. It iterates through the
+    attributes (excluding the last column assumed to be the label) and computes their gain ratios, returning the index
+    of the attribute with the highest gain ratio.
+    */
 
     int getSelectedAttribute(Table table) {
         int maxAttrIndex = -1;
@@ -167,9 +209,24 @@ public:
         return maxAttrIndex;
     }
 
+    /*
+    `getGainRatio()` function calculates the gain ratio for a specific attribute (`attrIndex`) in a given 
+    `Table` object (`table`). It divides the information gain (`getGain(table, attrIndex)`) by the split information 
+    (`getSplitInfoAttrD(table, attrIndex)`) to determine the effectiveness of the attribute in reducing uncertainty in 
+    the decision tree algorithm.
+    */    
+
     double getGainRatio(Table table, int attrIndex) {
         return getGain(table, attrIndex) / getSplitInfoAttrD(table, attrIndex);
     }
+
+    /*
+    `getInfoD()` function: calculates the entropy (information content) of the labels (last column)
+    in a given `Table` object (`table`). It computes the entropy using Shannon's entropy formula for discrete probability 
+    distributions, iterating over the data to determine the probability of each label and then calculating its 
+    contribution to the overall entropy.
+    
+    */    
 
     double getInfoD(Table table) {
         double ret = 0.0;
@@ -184,6 +241,14 @@ public:
         }
         return ret;
     }
+
+    /*
+    
+    `getInfoAttrD()` function: calculates the expected entropy (information content) of a given attribute (`attrIndex`) 
+    in a `Table` object (`table`). It computes this by summing the weighted entropy contributions of each distinct 
+    attribute value, where the weight is proportional to the frequency of each value in the data set.
+
+    */
 
     double getInfoAttrD(Table table, int attrIndex) {
         double ret = 0.0;
@@ -203,9 +268,27 @@ public:
         return ret;
     }
 
+    /*
+    
+    `getGain()` function: calculates the information gain achieved by splitting the data in a `Table` object (`table`)
+    based on a specified attribute (`attrIndex`). It quantifies how much uncertainty about the final outcome (entropy) 
+    decreases after splitting the data according to the attribute, by subtracting the expected entropy of the attribute 
+    (`getInfoAttrD(table, attrIndex)`) from the overall entropy (`getInfoD(table)`).
+    
+    */
+
     double getGain(Table table, int attrIndex) {
         return getInfoD(table) - getInfoAttrD(table, attrIndex);
     }
+
+    /*
+    
+    `getSplitInfoAttrD()` function: calculates the split information for a given attribute (`attrIndex`) in a `Table` 
+    object (`table`). It measures the amount of uncertainty associated with the distribution of attribute values across 
+    the dataset, using Shannon's entropy formula to compute the entropy of the probability distribution of attribute 
+    values.
+    
+    */
 
     double getSplitInfoAttrD(Table table, int attrIndex) {
         double ret = 0.0;
@@ -226,6 +309,7 @@ public:
         return ret;
     }
 
+    // printTree(): Prints the decision tree in a readable format.
     void printTree(int nodeIndex, string branch) {
         if (tree[nodeIndex].isLeaf) {
             cout << branch << "Label: " << tree[nodeIndex].label << "\n";
@@ -255,10 +339,17 @@ public:
     }
 };
 
+/*
+
+`InputReader` class is designed to read data from a CSV file (`filename`) and parse it into a `Table` object. 
+It opens the file, reads each line, splits it by comma to extract individual values, and then categorizes the data into 
+attribute names (`attrName`) and data rows (`data`).
+
+*/
 class InputReader {
 private:
-    ifstream fin;
-    Table table;
+    ifstream fin;           // stores input file stream
+    Table table;            // stores data that is read from the file.
 public:
     InputReader(string filename) {
         fin.open(filename);
@@ -289,6 +380,11 @@ public:
         return table;
     }
 };
+
+/*
+main program reads the csv file, gets the data, trains the decision tree model on the data and dumps the trained model
+into json file.
+*/
 
 int main(int argc, char* argv[]) {
     InputReader inputReader("Crop_recommendation.csv");

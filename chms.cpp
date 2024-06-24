@@ -3,6 +3,12 @@
 #include <chrono>
 #include <windows.h>
 
+// CropHealthMonitoringSystem class definition
+/*
+The CropHealthMonitoringSystem class simulates a monitoring system for crop health.
+It tracks soil moisture levels and pH levels, and can control an irrigation system and fertilizer application based on 
+these levels. The class also logs sensor data to CSV and JSON files.
+*/
 class CropHealthMonitoringSystem {
 
 public:
@@ -11,6 +17,11 @@ public:
         file << "soil_moisture_level,ph_level\n";
         file.close();
     }
+
+    // Method to update crop parameters
+    /*
+    Updates the soil moisture and pH levels, logging the changes every second. It decreases soil moisture by 5% every second and pH level by 1 every 3 seconds. Updates the JSON data after each change.
+    */
 
     void updateCropParameters() {
         writeDataToFile(soilMoistureLevel, phLevel);
@@ -38,6 +49,11 @@ public:
         updateJsonData();
     }
 
+    // Method to check crop health
+    /*
+    Checks the current soil moisture and pH levels, and triggers alerts if levels drop below thresholds (30% for soil moisture and 4 for pH). It starts the irrigation system or applies fertilizers if necessary. Logs data and updates JSON after each check.
+    */
+
     void checkCropHealth() {
         std::cout << "Soil Moisture Level: " << soilMoistureLevel << std::endl;
         std::cout << "pH Level: " << phLevel << std::endl;
@@ -64,6 +80,12 @@ public:
         updateJsonData();
     }
 
+
+    // Method to start the irrigation system
+    /*
+    Activates the irrigation system for 3 seconds, replenishing soil moisture to 100%. Logs the action and updates JSON data.
+    */
+
     void startIrrigationSystem() {
         std::cout << "Irrigation system started!" << std::endl;
 
@@ -79,6 +101,10 @@ public:
         updateJsonData();
     }
 
+    // Method to apply fertilizers
+    /*
+    Sprays fertilizers for 5 seconds, resetting pH levels to 12. Logs the action and updates JSON data.
+    */
     void giveFertilizers() {
         std::cout << "Sprinking Fertilizers!" << std::endl;
         auto startTime = std::chrono::steady_clock::now();
@@ -93,12 +119,15 @@ public:
     }
 
 private:
-    double soilMoistureLevel;
-    double phLevel;
-    bool irrigationSystem;
-    std::chrono::steady_clock::time_point lastPhUpdate;
+    double soilMoistureLevel;                               // stores current soil moisture level
+    double phLevel;                                         // stores current pH level
+    bool irrigationSystem;                                  // State of the irrigation system
+    std::chrono::steady_clock::time_point lastPhUpdate;     // Time point for last pH level update
 
-    // Function to update JSON data
+    // Method to update JSON data
+    /*
+    Writes the current soil moisture and pH levels to a JSON file.
+    */
     void updateJsonData() {
         std::ofstream outFile("data.json");
         outFile << "{\n";
@@ -107,6 +136,10 @@ private:
         outFile << "}\n";
     }
 
+    // Method to write data to CSV file
+    /*
+    Logs the current soil moisture and pH levels to a CSV file.
+    */
     void writeDataToFile(float soilMoistureLevel, float phLevel){
         std::ofstream file("sensor_data.csv", std::ios::app);
         file << soilMoistureLevel << "," << phLevel << "\n";
@@ -114,6 +147,11 @@ private:
     }
 };
 
+// Main function
+/*
+Initializes the CropHealthMonitoringSystem and continuously updates crop parameters and checks crop health in an
+infinite loop.
+*/
 int main() {
     CropHealthMonitoringSystem system;
 
